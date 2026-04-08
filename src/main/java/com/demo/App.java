@@ -3,12 +3,15 @@ package com.demo;
 import com.sun.net.httpserver.HttpServer;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
-import java.util.Random;
 
 public class App {
 
-    public static boolean isValidEnergy(int energy) {
-        return energy >= 0 && energy <= 200;
+    // ✅ Login validation logic
+    public static boolean validateLogin(String username, String password) {
+        if (username == null || password == null) {
+            return false;
+        }
+        return username.equals("admin") && password.equals("admin123");
     }
 
     public static void main(String[] args) throws Exception {
@@ -16,7 +19,7 @@ public class App {
         HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
 
         server.createContext("/", exchange -> {
-            String response = generateEnergyData();
+            String response = "Login Service Running...";
             exchange.sendResponseHeaders(200, response.length());
             OutputStream os = exchange.getResponseBody();
             os.write(response.getBytes());
@@ -25,18 +28,27 @@ public class App {
 
         server.start();
         System.out.println("Server started at http://localhost:8080");
-    }
 
-    public static String generateEnergyData() {
-        Random random = new Random();
-        int energy = random.nextInt(250) - 50;
+        // ✅ Console output for testing (important for exam)
+        System.out.println("\n--- Login Test Output ---");
 
-        if (energy < 0) {
-            return "❌ Invalid Energy Reading: " + energy;
-        } else if (energy > 200) {
-            return "⚠️ High Energy Usage: " + energy + " kWh";
-        } else {
-            return "✅ Normal Energy: " + energy + " kWh";
+        String[][] users = {
+            {"admin", "admin123"},
+            {"admin", "wrong"},
+            {"user", "admin123"},
+            {"", "admin123"},
+            {"admin", ""},
+            {null, "admin123"}
+        };
+
+        for (String[] user : users) {
+            boolean result = validateLogin(user[0], user[1]);
+
+            if (result) {
+                System.out.println("✅ Login Success: " + user[0]);
+            } else {
+                System.out.println("❌ Login Failed: " + user[0]);
+            }
         }
     }
 }
