@@ -1,48 +1,55 @@
 package com.demo;
-import com.sun.net.httpserver.HttpServer;
-import java.io.OutputStream;
-import java.net.InetSocketAddress;
-import java.util.Random;
 
 public class App {
 
-    public static boolean isValidEnergy(int energy) {
-        return energy >= 0 && energy <= 200;
+    public static double cancelTicket(int ticketPrice, int hoursBefore) {
+
+        if (ticketPrice <= 0 || hoursBefore < 0) {
+            return -1;
+        }
+
+        if (hoursBefore >= 24) {
+            return ticketPrice;
+        } else if (hoursBefore >= 12) {
+            return ticketPrice * 0.5;
+        } else {
+            return 0;
+        }
     }
 
     public static void main(String[] args) throws Exception {
-        System.out.println("Smart Energy Monitoring System Started...");
 
-        for (int i = 0; i < 10; i++) {
-            String result = generateEnergyData();
-            System.out.println(result);
-            Thread.sleep(1000); // delay for visibility
-        }
+        System.out.println("=== Ticket Cancellation Service Started ===");
 
-        HttpServer server = HttpServer.create(new InetSocketAddress(8080), 0);
+        int[][] tickets = {
+            {1000, 30},
+            {1000, 15},
+            {1000, 5},
+            {-100, 10},
+            {500, -2}
+        };
 
-        server.createContext("/", exchange -> {
-            String response = generateEnergyData();
-            exchange.sendResponseHeaders(200, response.length());
-            OutputStream os = exchange.getResponseBody();
-            os.write(response.getBytes());
-            os.close();
-        });
+        int i = 0;
 
-        server.start();
-        System.out.println("Server started at http://localhost:8080");
-    }
+        while (true) {   // ✅ IMPORTANT FIX (keeps pod alive)
 
-    public static String generateEnergyData() {
-        Random random = new Random();
-        int energy = random.nextInt(250) - 50;
+            int price = tickets[i % tickets.length][0];
+            int hours = tickets[i % tickets.length][1];
 
-        if (energy < 0) {
-            return "❌ Invalid Energy Reading: " + energy;
-        } else if (energy > 200) {
-            return "⚠️ High Energy Usage: " + energy + " kWh";
-        } else {
-            return "✅ Normal Energy: " + energy + " kWh";
+            double refund = cancelTicket(price, hours);
+
+            if (refund == -1) {
+                System.out.println("❌ Invalid Ticket Data");
+            } else if (refund == price) {
+                System.out.println("✅ Full Refund: ₹" + refund);
+            } else if (refund > 0) {
+                System.out.println("⚠️ Partial Refund: ₹" + refund);
+            } else {
+                System.out.println("❌ No Refund");
+            }
+
+            Thread.sleep(3000); // wait 3 sec
+            i++;
         }
     }
 }
